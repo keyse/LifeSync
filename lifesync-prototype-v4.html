@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no"/>
+<meta name="theme-color" content="#F7F5F0"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<title>LifeSync</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+/* ═══════════════════════════════════════════════════════════
+   LifeSync v4 — The Living Canvas
+   Mood is the atmosphere, not a step you pass through.
+   ═══════════════════════════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --surface:#F7F5F0;--surface-card:rgba(255,255,252,0.85);--surface-card-solid:#FFFEFA;
+  --surface-elevated:#FFFFFF;--surface-muted:#EDEAE4;--surface-sunken:#E5E2DC;
+  --text-primary:#2A2926;--text-secondary:#65635D;--text-muted:#97948E;--text-faint:#C0BDB6;
+  --primary:#5B6195;--primary-soft:#ECEDF4;--primary-glow:rgba(91,97,149,0.07);
+  --success:#5AB898;--success-soft:#E8F5EF;--warning:#C4A24D;--warning-soft:#F5F0E2;
+  --error:#C46A5A;--error-soft:#F5E6E3;
+  --shadow-xs:0 1px 2px rgba(42,41,38,0.03);
+  --shadow-sm:0 1px 4px rgba(42,41,38,0.04),0 0 1px rgba(42,41,38,0.03);
+  --shadow-md:0 4px 16px rgba(42,41,38,0.06);
+  --shadow-lg:0 8px 32px rgba(42,41,38,0.08);
+  --font-body:'DM Sans',system-ui,sans-serif;
+  --font-serif:'Newsreader',Georgia,serif;
+  --font-mono:'JetBrains Mono',monospace;
+  --safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px);
+  --R:14px;--RL:20px;--RF:9999px;
+  /* mood wash — set dynamically */
+  --wash:transparent;--wash-accent:var(--text-muted);--wash-soft:var(--surface-muted);
+}
+html{-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased}
+body{font-family:var(--font-body);background:var(--surface);color:var(--text-primary);
+  overscroll-behavior-y:contain;min-height:100dvh;font-size:15px;line-height:1.55}
+button{font-family:inherit;border:none;cursor:pointer;-webkit-user-select:none;
+  user-select:none;background:none;color:inherit;font-size:inherit}
+input{font-family:inherit;border:none;outline:none;background:none}
+
+.app{display:flex;flex-direction:column;min-height:100dvh;max-width:430px;margin:0 auto;
+  position:relative;background:var(--surface);transition:background 0.8s ease-out}
+@media(min-width:431px){.app{border-left:1px solid var(--surface-muted);border-right:1px solid var(--surface-muted)}}
+
+/* grain */
+.app::after{content:'';position:fixed;inset:0;z-index:9998;pointer-events:none;opacity:0.18;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E")}
+
+/* ═══════════════════════════════════════════════════════════
+   THE INTIMATE SPACE — Full-screen mood experience
+   Opens like a diary. No chrome. Just you and the question.
+   ═══════════════════════════════════════════════════════════ */
+.intimate{
+  position:fixed;inset:0;z-index:200;
+  display:flex;flex-direction:column;
+  max-width:430px;margin:0 auto;
+  background:var(--surface);overflow:hidden;
+  transition:opacity 0.55s cubic-bezier(0.16,1,0.3,1),
+             transform 0.55s cubic-bezier(0.16,1,0.3,1);
+}
+.intimate.leaving{
+  opacity:0;transform:scale(0.96);pointer-events:none;
+}
+
+/* ambient orb — a soft breathing light that responds to mood */
+.ambient-orb{
+  position:absolute;top:-15%;left:50%;transform:translateX(-50%);
+  width:140%;height:65%;border-radius:50%;
+  pointer-events:none;filter:blur(70px);
+  opacity:0;transition:opacity 1s ease-out,background 0.6s ease-out;
+}
+.ambient-orb.on{opacity:1}
+
+/* intimate layout */
+.intimate-body{
+  flex:1;display:flex;flex-direction:column;
+  justify-content:flex-end; /* content sits in thumb zone */
+  padding:0 30px;padding-top:var(--safe-top);
+  position:relative;z-index:1;
+  padding-bottom:20px;
+}
+
+/* greeting — whispered, warm, personal */
+.intimate-greeting{
+  font-family:var(--font-serif);font-weight:300;
+  font-size:36px;line-height:1.15;letter-spacing:-0.01em;
+  color:var(--text-primary);margin-bottom:10px;
+  opacity:0;animation:softUp 0.7s 0.1s cubic-bezier(0.16,1,0.3,1) forwards;
+}
+.intimate-question{
+  font-family:var(--font-serif);font-weight:400;font-style:italic;
+  font-size:20px;color:var(--text-secondary);line-height:1.45;
+  margin-bottom:36px;
+  opacity:0;animation:softUp 0.6s 0.3s cubic-bezier(0.16,1,0.3,1) forwards;
+}
+
+/* mood cards — large, warm, in the thumb zone */
+.intimate-moods{
+  display:grid;grid-template-columns:1fr 1fr;gap:12px;
+  margin-bottom:20px;
+  opacity:0;animation:softUp 0.6s 0.45s cubic-bezier(0.16,1,0.3,1) forwards;
+}
+.im-card{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:26px 14px 22px;border-radius:var(--RL);
+  background:var(--surface-card-solid);
+  border:2.5px solid transparent;
+  box-shadow:var(--shadow-sm);
+  min-height:130px;
+  transition:all 0.35s cubic-bezier(0.16,1,0.3,1);
+  position:relative;overflow:hidden;
+}
+.im-card:active{transform:scale(0.95)}
+.im-card.sel{transform:scale(1.03);box-shadow:var(--shadow-md)}
+.im-card .im-glow{
+  position:absolute;inset:0;opacity:0;transition:opacity 0.4s;border-radius:inherit;
+}
+.im-card.sel .im-glow{opacity:1}
+.im-card .im-emoji{font-size:34px;margin-bottom:10px;position:relative;z-index:1;
+  transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1)}
+.im-card.sel .im-emoji{transform:scale(1.18)}
+.im-card .im-label{font-weight:600;font-size:15px;position:relative;z-index:1;
+  transition:color 0.3s}
+.im-card .im-desc{color:var(--text-muted);font-size:11.5px;margin-top:3px;
+  position:relative;z-index:1;text-align:center;transition:color 0.3s}
+
+/* energy row — appears after mood */
+.intimate-energy{
+  margin-bottom:16px;
+  opacity:0;animation:softUp 0.4s cubic-bezier(0.16,1,0.3,1) forwards;
+}
+.ie-label{font-size:14px;font-weight:500;color:var(--text-muted);text-align:center;margin-bottom:12px}
+.ie-row{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
+.ie-pill{
+  display:flex;align-items:center;gap:5px;
+  padding:9px 16px;border-radius:var(--RF);
+  background:var(--surface-card-solid);border:1.5px solid var(--surface-muted);
+  box-shadow:var(--shadow-xs);transition:all 0.25s;font-size:13px;font-weight:500;
+}
+.ie-pill:active{transform:scale(0.93)}
+.ie-pill.sel{background:var(--primary-soft);border-color:var(--primary);color:var(--primary)}
+
+/* intimate footer — CTA + skip */
+.intimate-foot{
+  padding:0 30px;padding-bottom:calc(var(--safe-bottom) + 24px);
+  position:relative;z-index:1;
+}
+.intimate-cta{
+  display:flex;align-items:center;justify-content:center;
+  width:100%;padding:18px;
+  font-weight:600;font-size:16px;letter-spacing:0.005em;
+  border-radius:var(--R);transition:transform 0.12s,box-shadow 0.12s;
+  opacity:0;animation:softUp 0.4s cubic-bezier(0.16,1,0.3,1) forwards;
+}
+.intimate-cta:active{transform:scale(0.975)}
+.intimate-skip{
+  text-align:center;padding-top:14px;
+  opacity:0;animation:softUp 0.4s 0.6s cubic-bezier(0.16,1,0.3,1) forwards;
+}
+.intimate-skip button{font-size:13.5px;font-weight:400;color:var(--text-faint);
+  padding:6px 12px;transition:color 0.2s;font-family:var(--font-serif);font-style:italic}
+.intimate-skip button:active{color:var(--text-muted)}
+
+/* ═══════════════════════════════════════════════════════════
+   MAIN APP — Mood washes through everything
+   ═══════════════════════════════════════════════════════════ */
+
+/* topbar — translucent, mood-washed */
+.topbar{position:sticky;top:0;z-index:40;padding-top:var(--safe-top);
+  background:rgba(247,245,240,0.75);backdrop-filter:blur(24px) saturate(1.5);
+  -webkit-backdrop-filter:blur(24px) saturate(1.5)}
+.topbar-in{display:flex;align-items:center;justify-content:space-between;height:50px;padding:0 20px}
+.topbar-title{font-weight:600;font-size:17px;letter-spacing:-0.01em}
+.topbar-line{height:0.5px;background:linear-gradient(90deg,transparent,var(--surface-muted) 15%,var(--surface-muted) 85%,transparent)}
+
+.content{flex:1;overflow-y:auto;padding:0 20px 106px}
+
+/* bottomnav */
+.bottomnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;z-index:50;
+  background:rgba(255,255,255,0.82);backdrop-filter:blur(24px) saturate(1.6);-webkit-backdrop-filter:blur(24px) saturate(1.6);
+  border-top:0.5px solid rgba(237,234,228,0.6);padding-bottom:var(--safe-bottom)}
+.nav-row{display:flex;align-items:center;justify-content:space-around;height:60px;max-width:380px;margin:0 auto}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:52px;padding:6px 0;color:var(--text-muted);transition:color 0.2s;position:relative}
+.nav-item.active{color:var(--primary)}
+.nav-item svg{width:21px;height:21px;transition:transform 0.2s}
+.nav-item:active svg{transform:scale(0.86)}
+.nav-item .nlbl{font-size:10px;font-weight:500;letter-spacing:0.02em}
+.nav-dot{position:absolute;top:1px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--primary);opacity:0;transition:opacity 0.2s}
+.nav-item.active .nav-dot{opacity:1}
+.nav-add{display:flex;align-items:center;justify-content:center;width:44px;height:44px;margin-top:-12px;
+  background:var(--primary);color:white;border-radius:var(--R);
+  box-shadow:0 2px 10px rgba(91,97,149,0.22);transition:transform 0.15s}
+.nav-add:active{transform:scale(0.91)}
+.nav-add svg{width:20px;height:20px;stroke-width:2.5}
+
+/* ── MOOD AURA — the ambient header on dashboard ──────── */
+.mood-aura{
+  margin:-20px -20px 0;padding:28px 24px 24px;
+  position:relative;overflow:hidden;
+  transition:background 0.6s ease-out;
+  cursor:pointer;
+}
+.mood-aura::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(180deg, var(--wash) 0%, transparent 100%);
+  opacity:0.5;transition:opacity 0.6s;pointer-events:none;
+}
+.mood-aura-orb{
+  position:absolute;top:-40%;right:-20%;width:80%;height:120%;
+  border-radius:50%;filter:blur(50px);pointer-events:none;
+  transition:background 0.6s,opacity 0.6s;opacity:0.25;
+}
+.mood-aura-content{position:relative;z-index:1}
+
+.aura-date{font-size:12.5px;color:var(--text-muted);margin-bottom:8px;font-weight:400;letter-spacing:0.01em}
+.aura-greeting{font-family:var(--font-serif);font-size:26px;font-weight:300;line-height:1.2;margin-bottom:4px}
+.aura-sub{font-family:var(--font-serif);font-style:italic;font-size:15px;color:var(--text-secondary);line-height:1.45;margin-bottom:18px}
+.aura-mood-row{display:flex;align-items:center;gap:10px}
+.aura-mood-badge{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:8px 16px;border-radius:var(--RF);font-size:14px;font-weight:500;
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  transition:all 0.25s;
+}
+.aura-mood-badge:active{transform:scale(0.95)}
+.aura-change{font-size:12px;color:var(--text-faint);font-style:italic;font-family:var(--font-serif)}
+
+/* ── Shared ───────────────────────────────────────────── */
+@keyframes softUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@keyframes pop{0%{transform:scale(1)}35%{transform:scale(1.04)}100%{transform:scale(1)}}
+@keyframes checkDraw{from{stroke-dashoffset:24}to{stroke-dashoffset:0}}
+@keyframes toastIn{from{opacity:0;transform:translateY(16px) scale(0.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+
+.stagger>*{opacity:0;animation:softUp 0.45s cubic-bezier(0.16,1,0.3,1) forwards}
+.stagger>*:nth-child(1){animation-delay:50ms}.stagger>*:nth-child(2){animation-delay:100ms}
+.stagger>*:nth-child(3){animation-delay:150ms}.stagger>*:nth-child(4){animation-delay:200ms}
+.stagger>*:nth-child(5){animation-delay:250ms}.stagger>*:nth-child(6){animation-delay:300ms}
+.stagger>*:nth-child(7){animation-delay:350ms}.stagger>*:nth-child(8){animation-delay:400ms}
+.anim{animation:softUp 0.45s cubic-bezier(0.16,1,0.3,1) forwards}
+
+.toast-wrap{position:fixed;bottom:82px;left:50%;transform:translateX(-50%);z-index:100;pointer-events:none}
+.toast{background:var(--text-primary);color:var(--surface);padding:10px 22px;border-radius:var(--RF);font-size:14px;font-weight:500;box-shadow:var(--shadow-lg);animation:toastIn 0.3s cubic-bezier(0.34,1.56,0.64,1) forwards;white-space:nowrap}
+
+.card{background:var(--surface-card);border-radius:var(--RL);padding:16px;box-shadow:var(--shadow-sm);border:1px solid rgba(237,234,228,0.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.card-tap{transition:transform 0.15s}
+.card-tap:active{transform:scale(0.985)}
+
+/* plan item */
+.pi{background:var(--surface-card);border-radius:var(--RL);padding:16px;box-shadow:var(--shadow-sm);border:1px solid rgba(237,234,228,0.45);transition:all 0.3s cubic-bezier(0.16,1,0.3,1);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.pi.done{background:var(--success-soft);border-color:rgba(90,184,152,0.12);animation:pop 0.3s cubic-bezier(0.34,1.56,0.64,1)}
+.pi .pi-row{display:flex;align-items:flex-start;gap:12px}
+.pi-circ{width:24px;height:24px;border-radius:50%;border:2px solid var(--text-faint);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all 0.2s}
+.pi-circ:active{transform:scale(0.85)}
+.pi.done .pi-circ{background:var(--success);border-color:var(--success)}
+.pi-chk{stroke-dasharray:24;stroke-dashoffset:0;animation:checkDraw 0.3s ease-out}
+.pi-ttl{font-size:15px;font-weight:500;line-height:1.4}
+.pi.done .pi-ttl{text-decoration:line-through;color:var(--text-muted)}
+.pi-meta{display:flex;align-items:center;gap:6px;margin-top:5px;flex-wrap:wrap}
+.badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:var(--RF);text-transform:uppercase;letter-spacing:0.04em}
+.b-must{background:var(--error-soft);color:var(--error)}.b-should{background:var(--warning-soft);color:var(--warning)}.b-could{background:var(--surface-muted);color:var(--text-muted)}
+.pi-acts{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:14px;padding-top:12px;border-top:0.5px solid var(--surface-muted)}
+.btn-nt{padding:8px 16px;font-size:13px;font-weight:500;color:var(--text-muted);border-radius:10px;transition:background 0.15s}
+.btn-nt:active{background:var(--surface-muted)}
+.btn-d{padding:8px 18px;font-size:13px;font-weight:600;color:white;border-radius:10px;transition:transform 0.1s}
+.btn-d:active{transform:scale(0.95)}
+
+/* habit */
+.hc{background:var(--surface-card);border-radius:var(--RL);padding:16px;box-shadow:var(--shadow-sm);border:1px solid rgba(237,234,228,0.45);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.wave{display:flex;align-items:flex-end;gap:2px;height:36px;margin-bottom:6px}
+.wave-bar{flex:1;border-radius:2px;min-width:0;transition:height 0.4s cubic-bezier(0.16,1,0.3,1)}
+.wave-lbl{display:flex;justify-content:space-between;margin-bottom:14px}
+.wave-lbl span{font-size:10px;color:var(--text-faint)}
+.btn-log{width:100%;padding:10px;font-size:13px;font-weight:600;color:var(--primary);background:var(--primary-soft);border-radius:10px;transition:all 0.15s}
+.btn-log:active{transform:scale(0.98)}
+.btn-logged{width:100%;padding:10px;font-size:13px;font-weight:500;color:var(--success);display:flex;align-items:center;justify-content:center;gap:6px}
+
+/* budget */
+.bh{display:flex;flex-direction:column;align-items:center;padding:28px 0 24px}
+.ring-w{position:relative;display:inline-flex;align-items:center;justify-content:center}
+.ring-w svg.rs{transform:rotate(-90deg)}
+.ring-t{position:absolute;text-align:center}
+.ei{display:flex;align-items:center;gap:12px;padding:14px;background:var(--surface-card);border-radius:var(--R);box-shadow:var(--shadow-xs);border:1px solid rgba(237,234,228,0.4);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+
+.btn-p{display:flex;align-items:center;justify-content:center;width:100%;padding:16px 24px;background:var(--primary);color:white;font-weight:600;font-size:15px;border-radius:var(--R);box-shadow:0 2px 8px rgba(91,97,149,0.18);transition:transform 0.1s}
+.btn-p:active{transform:scale(0.98)}
+
+.sh{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px}
+.sh h2{font-weight:600;font-size:16px;letter-spacing:-0.008em}
+.sh .sl{font-size:13px;font-weight:500;color:var(--primary)}
+
+.gm{padding:16px 18px;border-radius:var(--RL);border-left:3px solid;font-family:var(--font-serif);font-style:italic;font-size:15.5px;line-height:1.55;color:var(--text-secondary)}
+
+.pc{display:flex;gap:8px;margin-bottom:16px}
+.pc-btn{padding:7px 13px;font-size:11.5px;font-weight:600;border-radius:var(--RF);border:1.5px solid var(--surface-muted);color:var(--text-muted);transition:all 0.15s}
+.pc-btn:active{background:var(--surface-muted);transform:scale(0.95)}
+
+.wp{padding:12px 16px;margin-bottom:16px;background:var(--surface-muted);border-radius:var(--R);font-size:13px;color:var(--text-secondary);line-height:1.6}
+.wp summary{cursor:pointer;font-weight:500;font-size:13px;color:var(--text-muted);list-style:none;display:flex;align-items:center;gap:6px}
+.wp summary::-webkit-details-marker{display:none}
+.wp[open] summary{margin-bottom:8px}
+.wp ul{margin:0;padding-left:0;list-style:none}
+.wp li{padding:2px 0}.wp li::before{content:'·';margin-right:8px;color:var(--text-faint)}
+
+.fi{width:100%;padding:14px 16px;background:var(--surface-muted);border-radius:var(--R);font-size:15px;color:var(--text-primary);border:1.5px solid transparent;transition:border-color 0.2s}
+.fi::placeholder{color:var(--text-faint)}.fi:focus{border-color:var(--primary)}
+
+.rp{transition:stroke-dashoffset 0.6s cubic-bezier(0.16,1,0.3,1)}
+
+/* sheet */
+.sh-bg{position:fixed;inset:0;z-index:60;background:rgba(42,41,38,0.22);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);animation:fadeIn 0.2s}
+.sh-panel{position:fixed;inset-inline:0;bottom:0;z-index:60;max-width:430px;margin:0 auto;background:var(--surface-elevated);border-radius:var(--RL) var(--RL) 0 0;box-shadow:var(--shadow-lg);padding-bottom:calc(var(--safe-bottom) + 16px);animation:slideUp 0.35s cubic-bezier(0.32,0.72,0,1)}
+.sh-handle{width:36px;height:4px;border-radius:var(--RF);background:var(--surface-sunken);margin:10px auto 20px}
+.sh-opt{display:flex;align-items:center;gap:14px;width:100%;padding:14px 16px;background:var(--surface-card-solid);border-radius:var(--R);box-shadow:var(--shadow-xs);border:1px solid rgba(237,234,228,0.4);margin-bottom:10px;transition:background 0.15s,transform 0.1s}
+.sh-opt:active{background:var(--surface-muted);transform:scale(0.985)}
+
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:0.01ms!important;transition-duration:0.01ms!important;animation-iteration-count:1!important}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+(function(){
+'use strict';
+
+// ── State ──
+const S={tab:'home',mood:null,energy:null,intimate:true,leaving:false,
+  planDone:false,items:[],habits:[],exps:[],
+  budget:{amt:2000,spent:1240,days:14},sheet:false,addExp:false,toasts:[]};
+
+// ── Mood Design System ──
+const M={
+  calm:{a:'#5AB898',s:'#EBF7F2',g:'rgba(90,184,152,0.28)',w:'rgba(90,184,152,0.12)',bg:'rgba(90,184,152,0.04)'},
+  okay:{a:'#C4A24D',s:'#F7F2E4',g:'rgba(196,162,77,0.24)',w:'rgba(196,162,77,0.10)',bg:'rgba(196,162,77,0.035)'},
+  busy:{a:'#C87A4A',s:'#F7EDE4',g:'rgba(200,122,74,0.24)',w:'rgba(200,122,74,0.10)',bg:'rgba(200,122,74,0.035)'},
+  overwhelmed:{a:'#A082C4',s:'#F0EBF7',g:'rgba(160,130,196,0.24)',w:'rgba(160,130,196,0.10)',bg:'rgba(160,130,196,0.035)'}
+};
+const EM={calm:'🌿',okay:'🌤️',busy:'🎯',overwhelmed:'🌊'};
+const LB={calm:'Calm',okay:'Okay',busy:'Busy',overwhelmed:'Overwhelmed'};
+const DE={calm:'Grounded & clear',okay:'Steady & solid',busy:'Lots happening',overwhelmed:'Need gentleness'};
+const PH={calm:"Here's your plan.",okay:"Here's your plan.",busy:"Here's your plan.",overwhelmed:"Keeping it light. Essentials first."};
+const PS={calm:"Fixed items first. Priority items earlier.",okay:"Fixed items first. Priority items earlier.",busy:"High-priority tasks appear earlier.",overwhelmed:"I moved optional items to Later."};
+const DM={calm:'A beautiful day to make progress at your own pace.',okay:"Steady wins the race. You're doing just fine.",busy:'Remember to take a breath between tasks.',overwhelmed:'Just being here is enough. Take it one thing at a time.'};
+const AURA_SUB={calm:'Today feels open and clear.',okay:'Steady energy to work with.',busy:'A full day. One thing at a time.',overwhelmed:'Going gently today.'};
+const EO=[{id:'high',e:'⚡',l:'High'},{id:'medium',e:'🔆',l:'Medium'},{id:'low',e:'🌙',l:'Low'},{id:'depleted',e:'😴',l:'Depleted'}];
+
+function greetWord(){const h=new Date().getHours();return h<12?'morning':h<17?'afternoon':'evening'}
+
+// ── Data ──
+function seedPlan(){
+  const a=[{id:1,t:'Write project proposal',p:'must',tm:'~30 min',tg:'Work',e:'📋'},{id:2,t:'Call dentist to reschedule',p:'must',tm:'~5 min',tg:'Personal',e:'📞'},{id:3,t:'Morning meditation',p:'should',tm:'10 min',tg:'Wellbeing',e:'🧘',tp:'habit'},{id:4,t:'Read for 20 minutes',p:'should',tm:'20 min',tg:'Growth',e:'📖',tp:'habit'},{id:5,t:'Grocery shopping list',p:'should',tm:'~15 min',tg:'Home',e:'🛒'},{id:6,t:'Review weekly spending',p:'could',tm:'~5 min',tg:'Finance',e:'💰',tp:'finance'},{id:7,t:'Go for a 30-min walk',p:'should',tm:'30 min',tg:'Health',e:'🚶',tp:'habit'},{id:8,t:'Reply to team messages',p:'could',tm:'~10 min',tg:'Work',e:'💬'}];
+  const mx=S.mood==='overwhelmed'?3:S.mood==='busy'?5:S.mood==='okay'?7:8;
+  const o={must:0,should:1,could:2};
+  return a.sort((a,b)=>o[a.p]-o[b.p]).slice(0,mx).map(i=>({...i,s:'pending'}));
+}
+function seedH(){
+  const w=c=>Array.from({length:28},()=>Math.random()<c?0.5+Math.random()*0.5:0);
+  return[{id:1,t:'Meditate',e:'🧘',tg:4,d:3,l:false,w:w(0.7)},{id:2,t:'Read',e:'📖',tg:5,d:2,l:false,w:w(0.55)},{id:3,t:'Walk',e:'🚶',tg:4,d:4,l:false,w:w(0.8)},{id:4,t:'Journal',e:'✍️',tg:3,d:1,l:false,w:w(0.45)},{id:5,t:'Stretch',e:'🤸',tg:5,d:3,l:false,w:w(0.6)}];
+}
+function seedE(){
+  const d=new Date(),dd=o=>{const x=new Date(d);x.setDate(x.getDate()-o);return x},fm=x=>x.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  return[{n:'Whole Foods groceries',a:87.50,c:'Food',e:'🍽️',dt:fm(d)},{n:'Uber to downtown',a:14.20,c:'Transport',e:'🚗',dt:fm(dd(1))},{n:'Netflix subscription',a:15.99,c:'Entertainment',e:'🎬',dt:fm(dd(2))},{n:'Coffee & pastry',a:8.75,c:'Food',e:'🍽️',dt:fm(dd(2))},{n:'New running shoes',a:129.00,c:'Shopping',e:'🛍️',dt:fm(dd(4))},{n:'Electric bill',a:142.30,c:'Bills',e:'📄',dt:fm(dd(5))},{n:'Pharmacy',a:24.50,c:'Health',e:'💊',dt:fm(dd(6))},{n:'Lunch with Sarah',a:32.00,c:'Food',e:'🍽️',dt:fm(dd(7))},{n:'Online course',a:49.99,c:'Education',e:'📚',dt:fm(dd(8))},{n:'Gas station',a:45.00,c:'Transport',e:'🚗',dt:fm(dd(10))}];
+}
+S.habits=seedH();S.exps=seedE();
+
+let toastT=null;
+function toast(m){clearTimeout(toastT);S.toasts=[{m}];render();toastT=setTimeout(()=>{S.toasts=[];render()},1800)}
+
+function ring(v,mx,col,sz,lbl,sw){
+  sw=sw||(sz>100?8:4);const r=(sz-sw)/2,c=2*Math.PI*r,p=mx>0?Math.min(v/mx,1):0,off=c*(1-p),cx=sz/2;
+  return`<div class="ring-w" style="width:${sz}px;height:${sz}px"><svg class="rs" width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}"><circle cx="${cx}" cy="${cx}" r="${r}" fill="none" stroke="var(--surface-muted)" stroke-width="${sw}"/><circle cx="${cx}" cy="${cx}" r="${r}" fill="none" stroke="${col}" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${off}" class="rp"/></svg><div class="ring-t">${lbl}</div></div>`;
+}
+
+// ── Render ──
+const R=document.getElementById('root');
+function render(){
+  let h=`<div class="app">`;
+  if(S.intimate||S.leaving)h+=renderIntimate();
+  if(!S.intimate){
+    const tt={home:'LifeSync',plan:'Plan',habits:'Habits',budget:'Budget'};
+    h+=`<div class="topbar"><div class="topbar-in"><span class="topbar-title">${tt[S.tab]}</span></div><div class="topbar-line"></div></div>`;
+    h+=`<div class="content">`;
+    switch(S.tab){case'home':h+=rHome();break;case'plan':h+=rPlan();break;case'habits':h+=rHabits();break;case'budget':h+=rBudget();break}
+    h+=`</div>`;h+=rNav();if(S.sheet)h+=rSheet();
+  }
+  if(S.toasts.length){h+=`<div class="toast-wrap">`;for(const t of S.toasts)h+=`<div class="toast">${t.m}</div>`;h+=`</div>`}
+  h+=`</div>`;R.innerHTML=h;bindAll();
+}
+
+// ══════════════════════════════════════════════════════════
+// THE INTIMATE SPACE
+// ══════════════════════════════════════════════════════════
+function renderIntimate(){
+  const mc=S.mood?M[S.mood]:null;
+  const orbBg=mc?`background:radial-gradient(ellipse,${mc.g},transparent 70%)`:'';
+  const orbOn=mc?'on':'';
+
+  let h=`<div class="intimate ${S.leaving?'leaving':''}">`;
+  h+=`<div class="ambient-orb ${orbOn}" style="${orbBg}"></div>`;
+  h+=`<div class="intimate-body">`;
+
+  // Greeting
+  h+=`<div class="intimate-greeting">Good ${greetWord()}.</div>`;
+  h+=`<div class="intimate-question">How's today feeling?</div>`;
+
+  // Mood cards
+  h+=`<div class="intimate-moods">`;
+  for(const m of['calm','okay','busy','overwhelmed']){
+    const sel=S.mood===m,c=M[m];
+    h+=`<button class="im-card ${sel?'sel':''}" data-mood="${m}" style="${sel?`border-color:${c.a};background:${c.s}`:''}">
+      ${sel?`<div class="im-glow" style="background:radial-gradient(circle at 50% 35%,${c.g},transparent 70%)"></div>`:''}
+      <span class="im-emoji">${EM[m]}</span>
+      <span class="im-label" ${sel?`style="color:${c.a}"`:''}>${LB[m]}</span>
+      <span class="im-desc">${DE[m]}</span>
+    </button>`;
+  }
+  h+=`</div>`;
+
+  // Energy
+  if(S.mood){
+    h+=`<div class="intimate-energy"><div class="ie-label">Energy?</div><div class="ie-row">`;
+    for(const e of EO)h+=`<button class="ie-pill ${S.energy===e.id?'sel':''}" data-energy="${e.id}"><span>${e.e}</span><span>${e.l}</span></button>`;
+    h+=`</div></div>`;
+  }
+
+  h+=`</div>`; // body
+
+  // Footer
+  h+=`<div class="intimate-foot">`;
+  if(S.mood&&S.energy){
+    const mc=M[S.mood];
+    h+=`<button class="intimate-cta" data-a="enter" style="background:${mc.a};color:white;box-shadow:0 3px 14px ${mc.g}">Let's go →</button>`;
+  } else if(S.mood) {
+    h+=`<button class="intimate-cta" style="background:var(--surface-muted);color:var(--text-faint);cursor:default;box-shadow:none">Pick your energy level</button>`;
+  }
+  h+=`<div class="intimate-skip"><button data-a="skip">Skip — plan anyway.</button></div>`;
+  h+=`</div></div>`;
+  return h;
+}
+
+// ══════════════════════════════════════════════════════════
+// SCREENS
+// ══════════════════════════════════════════════════════════
+
+function rNav(){
+  const tabs=[{id:'home',l:'Home',d:'M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z'},{id:'plan',l:'Plan',d:'M8 2v4M16 2v4M3 10h18M9 16l2 2 4-4',rect:'3 4 18 18 2'},null,{id:'habits',l:'Habits',d:'M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zM12 6v6l4 2'},{id:'budget',l:'Budget',d:'M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2.5M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4'}];
+  let h=`<div class="bottomnav"><div class="nav-row">`;
+  for(const t of tabs){
+    if(!t){h+=`<button class="nav-add" data-a="sheet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>`;continue}
+    const ac=S.tab===t.id?'active':'',sw=ac?'2':'1.5';
+    let ic=`<path d="${t.d}"/>`;if(t.rect){const[x,y,w,ht,rx]=t.rect.split(' ');ic+=`<rect x="${x}" y="${y}" width="${w}" height="${ht}" rx="${rx}"/>`}
+    h+=`<button class="nav-item ${ac}" data-tab="${t.id}"><div class="nav-dot"></div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${ic}</svg><span class="nlbl">${t.l}</span></button>`;
+  }
+  return h+`</div></div>`;
+}
+
+function rSheet(){
+  return`<div class="sh-bg" data-a="csh"></div><div class="sh-panel"><div class="sh-handle"></div><div style="padding:0 20px 8px"><h2 style="font-weight:600;font-size:17px;margin-bottom:16px">Quick Add</h2><button class="sh-opt" data-a="sp"><div style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:10px;font-size:18px;background:var(--primary-soft)">📋</div><span style="font-weight:500;font-size:15px">Add Task</span></button><button class="sh-opt" data-a="sb"><div style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:10px;font-size:18px;background:var(--warning-soft)">💰</div><span style="font-weight:500;font-size:15px">Log Expense</span></button><button class="sh-opt" data-a="sm"><div style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:10px;font-size:18px;background:var(--success-soft)">🌤️</div><span style="font-weight:500;font-size:15px">Check In</span></button></div></div>`;
+}
+
+// ── Dashboard — Mood Aura is the hero ──
+function rHome(){
+  const mc=S.mood?M[S.mood]:M.okay;
+  const td=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+
+  // Mood aura — the living header
+  let h=`<div class="mood-aura" data-a="recheck" style="background:${mc.s}">
+    <div class="mood-aura-orb" style="background:${mc.w}"></div>
+    <div class="mood-aura-content">
+      <div class="aura-date">${td}</div>
+      <div class="aura-greeting">Good ${greetWord()}.</div>
+      <div class="aura-sub">${S.mood?AURA_SUB[S.mood]:'How are you feeling?'}</div>
+      <div class="aura-mood-row">
+        <div class="aura-mood-badge" style="background:rgba(255,255,255,0.6);border:1.5px solid ${mc.a}25;color:${mc.a}">
+          <span style="font-size:16px">${EM[S.mood||'okay']}</span>
+          <span style="font-weight:600">${LB[S.mood||'okay']}</span>
+        </div>
+        <span class="aura-change">tap to change</span>
+      </div>
+    </div>
+  </div>`;
+
+  h+=`<div style="padding-top:22px">`;
+
+  // Plan card
+  if(S.planDone){
+    const dn=S.items.filter(i=>i.s==='completed').length,tot=S.items.filter(i=>i.s!=='skipped').length;
+    h+=`<div class="card card-tap" data-a="gpv" style="margin-bottom:20px"><div style="display:flex;align-items:center;justify-content:space-between"><div><p style="font-size:13px;font-weight:500;color:var(--text-secondary);margin-bottom:4px">Today's Plan</p><p style="font-weight:600;font-size:17px">${dn} of ${tot} done</p></div>${ring(dn,tot,mc.a,50,`<span style="font-family:var(--font-mono);font-size:13px;font-weight:600">${dn}/${tot}</span>`)}</div></div>`;
+  } else {
+    h+=`<button class="btn-p" data-a="buildplan" style="margin-bottom:20px;justify-content:space-between"><div style="text-align:left"><div>Plan My Day</div><div style="font-size:13px;opacity:0.75;font-weight:400;margin-top:2px">A plan that fits today.</div></div></button>`;
+  }
+
+  // Habits
+  h+=`<div class="sh"><h2>Habits</h2><button class="sl" data-tab="habits">See all</button></div>`;
+  h+=`<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:22px">`;
+  for(const hb of S.habits.slice(0,3)){
+    const pct=hb.tg>0?Math.min(100,Math.round(hb.d/hb.tg*100)):0;
+    h+=`<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--surface-card);border-radius:var(--R);box-shadow:var(--shadow-xs);border:1px solid rgba(237,234,228,0.4);backdrop-filter:blur(4px)"><span style="font-size:20px">${hb.e}</span><div style="flex:1"><p style="font-size:14px;font-weight:500">${hb.t}</p><p style="font-size:11px;color:var(--text-muted)">${hb.d}/${hb.tg} this week</p></div><div style="width:52px;height:5px;background:var(--surface-sunken);border-radius:var(--RF);overflow:hidden"><div style="height:100%;width:${pct}%;background:${mc.a};border-radius:var(--RF);transition:width 0.4s"></div></div></div>`;
+  }
+  h+=`</div>`;
+
+  // Budget
+  const b=S.budget,rem=b.amt-b.spent,bp=Math.round(b.spent/b.amt*100),bc=bp<60?'var(--success)':bp<80?'var(--warning)':'var(--error)';
+  h+=`<div class="sh"><h2>Budget</h2><button class="sl" data-tab="budget">Details</button></div>`;
+  h+=`<div class="card" style="margin-bottom:22px"><div style="display:flex;align-items:center;gap:14px">${ring(bp,100,bc,44,`<span style="font-family:var(--font-mono);font-size:11px;font-weight:600">${bp}%</span>`,3.5)}<div><p style="font-size:14px;color:var(--text-secondary)">Remaining this month:</p><p style="font-family:var(--font-mono);font-weight:600;font-size:18px;margin-top:2px">$${rem.toLocaleString()}</p></div></div></div>`;
+
+  // Gentle message
+  h+=`<div class="gm" style="background:${mc.s};border-color:${mc.a}">${EM[S.mood||'okay']} ${DM[S.mood||'okay']}</div>`;
+  h+=`</div>`;
+  return h;
+}
+
+// ── Plan ──
+function rPlan(){
+  if(!S.planDone){
+    return`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:55vh;text-align:center"><div style="width:64px;height:64px;border-radius:var(--RL);background:var(--primary-soft);display:flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:20px">🌅</div><h1 style="font-family:var(--font-serif);font-size:22px;font-weight:400;margin-bottom:10px">Ready to plan?</h1><p style="color:var(--text-secondary);font-size:15px;max-width:260px;margin:0 auto 28px">A plan that fits today.</p><button class="btn-p" style="width:auto;padding:16px 36px" data-a="buildplan">Plan My Day</button></div>`;
+  }
+  const mc=M[S.mood],dn=S.items.filter(i=>i.s==='completed').length,act=S.items.filter(i=>i.s!=='skipped'),tot=act.length,allD=act.every(i=>i.s!=='pending');
+  const td=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+
+  let h=`</div><div style="background:linear-gradient(180deg,${mc.s} 0%,var(--surface) 100%);padding:24px 20px 20px"><div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px"><div><p style="color:var(--text-muted);font-size:12.5px;margin-bottom:6px">${td}</p><h1 style="font-family:var(--font-serif);font-size:22px;font-weight:400;line-height:1.25">${PH[S.mood]}</h1><p style="color:var(--text-secondary);font-size:13px;margin-top:4px">${PS[S.mood]}</p></div>${ring(dn,tot,mc.a,54,`<span style="font-family:var(--font-mono);font-size:13px;font-weight:600">${dn}/${tot}</span>`)}</div><div style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:var(--RF);background:rgba(255,255,255,0.6);border:1px solid ${mc.a}20;font-size:12px;font-weight:500;color:var(--text-secondary)"><span>${EM[S.mood]}</span>${LB[S.mood]} · ${S.energy?S.energy[0].toUpperCase()+S.energy.slice(1):''} energy</div></div><div class="content" style="padding-top:0;margin-top:-4px">`;
+
+  h+=`<div class="pc"><button class="pc-btn">Soften</button><button class="pc-btn">Defer</button><button class="pc-btn">Rebuild plan</button></div>`;
+  h+=`<details class="wp"><summary><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>Why this plan?</summary><ul><li>Fixed items were placed first.</li><li>High-priority tasks appear earlier.</li>${S.mood==='overwhelmed'?'<li>You chose Overwhelmed, so I kept essentials and moved optional items to Later.</li>':''}${S.energy==='low'||S.energy==='depleted'?'<li>Energy is low, so the plan is shorter.</li>':''}</ul></details>`;
+
+  h+=`<div class="stagger" style="display:flex;flex-direction:column;gap:10px">`;
+  for(const i of act){const d=i.s==='completed',bc=i.p==='must'?'b-must':i.p==='should'?'b-should':'b-could';
+    h+=`<div class="pi ${d?'done':''}"><div class="pi-row"><button class="pi-circ" data-c="${i.id}" style="${!d?`border-color:${mc.a}`:''}">${d?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path class="pi-chk" d="M20 6 9 17l-5-5"/></svg>':''}</button><div style="flex:1;min-width:0"><p class="pi-ttl">${i.t}</p><div class="pi-meta"><span class="badge ${bc}">${i.p}</span>${i.tm?`<span style="font-size:12px;color:var(--text-muted)">⏱ ${i.tm}</span>`:''}${i.tg?`<span style="font-size:12px;color:var(--text-muted)">${i.e} ${i.tg}</span>`:''}</div></div></div>${!d?`<div class="pi-acts"><button class="btn-nt" data-sk="${i.id}">Not today</button><button class="btn-d" data-c="${i.id}" style="background:${mc.a}">Done</button></div>`:''}</div>`}
+  h+=`</div>`;
+  if(allD&&tot>0)h+=`<div class="gm anim" style="margin-top:20px;background:${mc.s};border-color:${mc.a}">${EM[S.mood]} ${DM[S.mood]}</div>`;
+  return h;
+}
+
+// ── Habits ──
+function rHabits(){
+  const mc=S.mood?M[S.mood]:M.calm;
+  let h=`<div style="padding-top:20px;margin-bottom:24px"><h1 style="font-weight:600;font-size:21px">Habits</h1><p style="color:var(--text-muted);font-size:13px;margin-top:4px">Momentum over the last 4 weeks</p></div><div class="stagger" style="display:flex;flex-direction:column;gap:14px">`;
+  for(const hb of S.habits){
+    h+=`<div class="hc"><div style="display:flex;align-items:center;gap:12px;margin-bottom:14px"><span style="font-size:26px">${hb.e}</span><div><p style="font-weight:600;font-size:15px">${hb.t}</p><p style="font-size:12px;color:var(--text-muted)">${hb.d}× this week · target ${hb.tg}×</p></div></div><div class="wave">`;
+    for(let i=0;i<28;i++){const v=hb.w[i],hp=v>0?Math.max(22,Math.round(v*100)):8,op=v>0?(0.45+v*0.55):0.12,it=i===27;
+      h+=`<div class="wave-bar" style="height:${hp}%;opacity:${op};background:${it?'var(--primary)':mc.a}"></div>`}
+    h+=`</div><div class="wave-lbl"><span>4 weeks ago</span><span>today</span></div>`;
+    h+=hb.l?`<div class="btn-logged"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>Counts.</div>`:`<button class="btn-log" data-lg="${hb.id}">Log Today</button>`;
+    h+=`</div>`}
+  return h+`</div>`;
+}
+
+// ── Budget ──
+function rBudget(){
+  const b=S.budget,rem=b.amt-b.spent,p=Math.round(b.spent/b.amt*100),c=p<60?'var(--success)':p<80?'var(--warning)':'var(--error)';
+  let h=`<div class="bh" style="padding-top:40px">${ring(p,100,c,164,`<div style="text-align:center"><p style="font-family:var(--font-mono);font-weight:700;font-size:26px">$${b.spent.toLocaleString()}</p><p style="font-size:12px;color:var(--text-muted);margin-top:2px">of $${b.amt.toLocaleString()}</p></div>`,8)}<p style="font-size:14px;color:var(--text-secondary);margin-top:18px">Remaining this month: <strong style="font-family:var(--font-mono);font-weight:600;color:var(--text-primary)">$${rem.toLocaleString()}</strong></p><p style="font-size:12px;color:var(--text-muted);margin-top:4px">${b.days} days left</p><button style="margin-top:16px;padding:10px 22px;font-size:14px;font-weight:600;color:white;background:var(--primary);border-radius:10px;box-shadow:0 2px 8px rgba(91,97,149,0.18)" data-a="te">Log expense</button></div>`;
+  if(S.addExp){h+=`<div class="card anim" style="margin-bottom:16px"><h3 style="font-weight:600;font-size:15px;margin-bottom:14px">New expense</h3><div style="display:flex;flex-direction:column;gap:10px"><input type="number" placeholder="Amount" class="fi" style="font-family:var(--font-mono)"/><input type="text" placeholder="Category" class="fi"/><div style="display:flex;gap:8px;margin-top:4px"><button style="flex:1;padding:12px;font-size:14px;font-weight:500;color:var(--text-muted);border-radius:10px" data-a="te">Cancel</button><button style="flex:1;padding:12px;font-size:14px;font-weight:600;color:white;background:var(--primary);border-radius:10px" data-a="te">Save</button></div></div></div>`}
+  h+=`<div class="sh" style="margin-top:8px"><h2>Recent</h2></div><div style="display:flex;flex-direction:column;gap:8px">`;
+  for(const e of S.exps)h+=`<div class="ei"><div style="width:38px;height:38px;display:flex;align-items:center;justify-content:center;background:var(--surface-muted);border-radius:10px;font-size:17px;flex-shrink:0">${e.e}</div><div style="flex:1;min-width:0"><p style="font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.n}</p><p style="font-size:12px;color:var(--text-muted);margin-top:1px">${e.c} · ${e.dt}</p></div><span style="font-family:var(--font-mono);font-size:14px;font-weight:500;flex-shrink:0">−$${e.a.toFixed(2)}</span></div>`;
+  return h+`</div>`;
+}
+
+// ══════════════════════════════════════════════════════════
+// EVENTS
+// ══════════════════════════════════════════════════════════
+function leaveIntimate(){
+  S.leaving=true;render();
+  setTimeout(()=>{
+    S.intimate=false;S.leaving=false;
+    S.items=seedPlan();S.planDone=true;S.tab='home';
+    render();
+  },480);
+}
+
+function bindAll(){
+  document.querySelectorAll('[data-tab]').forEach(el=>el.addEventListener('click',()=>{S.tab=el.dataset.tab;S.sheet=false;render()}));
+  document.querySelectorAll('[data-mood]').forEach(el=>el.addEventListener('click',()=>{S.mood=el.dataset.mood;S.energy=null;render()}));
+  document.querySelectorAll('[data-energy]').forEach(el=>el.addEventListener('click',()=>{S.energy=el.dataset.energy;render()}));
+  document.querySelectorAll('[data-a="enter"]').forEach(el=>el.addEventListener('click',leaveIntimate));
+  document.querySelectorAll('[data-a="skip"]').forEach(el=>el.addEventListener('click',()=>{if(!S.mood)S.mood='okay';if(!S.energy)S.energy='medium';leaveIntimate()}));
+  document.querySelectorAll('[data-a="recheck"]').forEach(el=>el.addEventListener('click',()=>{S.intimate=true;S.leaving=false;render()}));
+  document.querySelectorAll('[data-a="buildplan"]').forEach(el=>el.addEventListener('click',()=>{S.items=seedPlan();S.planDone=true;S.tab='plan';render()}));
+  document.querySelectorAll('[data-a="gpv"]').forEach(el=>el.addEventListener('click',()=>{S.tab='plan';render()}));
+  document.querySelectorAll('[data-c]').forEach(el=>el.addEventListener('click',()=>{const id=parseInt(el.dataset.c),it=S.items.find(i=>i.id===id);if(it&&it.s==='pending'){it.s='completed';render();toast(it.tp==='habit'?'Counts.':'Nice. Done.')}}));
+  document.querySelectorAll('[data-sk]').forEach(el=>el.addEventListener('click',()=>{const id=parseInt(el.dataset.sk),it=S.items.find(i=>i.id===id);if(it){it.s='skipped';render();toast('Moved to Later.')}}));
+  document.querySelectorAll('[data-lg]').forEach(el=>el.addEventListener('click',()=>{const id=parseInt(el.dataset.lg),hb=S.habits.find(h=>h.id===id);if(hb&&!hb.l){hb.l=true;hb.d=Math.min(hb.d+1,hb.tg);render();toast('Counts.')}}));
+  document.querySelectorAll('[data-a="sheet"]').forEach(el=>el.addEventListener('click',()=>{S.sheet=true;render()}));
+  document.querySelectorAll('[data-a="csh"]').forEach(el=>el.addEventListener('click',()=>{S.sheet=false;render()}));
+  document.querySelectorAll('[data-a="sp"]').forEach(el=>el.addEventListener('click',()=>{S.sheet=false;S.tab='plan';render()}));
+  document.querySelectorAll('[data-a="sb"]').forEach(el=>el.addEventListener('click',()=>{S.sheet=false;S.tab='budget';render()}));
+  document.querySelectorAll('[data-a="sm"]').forEach(el=>el.addEventListener('click',()=>{S.sheet=false;S.intimate=true;render()}));
+  document.querySelectorAll('[data-a="te"]').forEach(el=>el.addEventListener('click',()=>{S.addExp=!S.addExp;render()}));
+}
+
+render();
+})();
+</script>
+</body>
+</html>
